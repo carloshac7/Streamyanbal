@@ -189,9 +189,6 @@ with col3:
     mac_count = len(df_filtrado[df_filtrado['Workspace'] == 'MAC'])
     st.metric("🟠 MAC", mac_count)
 
-with col4:
-    duracion_promedio = (df_filtrado['Fin'] - df_filtrado['Inicio']).dt.total_seconds().mean() / 60
-    st.metric("⏱️ Duración Avg", f"{duracion_promedio:.1f} min")
 
 # Mostrar bases de datos con ejecuciones múltiples
 ejecuciones_multiples = df_filtrado[df_filtrado['num_ejecucion'] > 1]['Nombre Modelo Semántico'].unique()
