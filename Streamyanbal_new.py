@@ -222,7 +222,7 @@ fig = px.timeline(
 )
 
 fig.update_yaxes(autorange="reversed", title="Modelos Semánticos")
-fig.update_xaxes(title="Hora del día", tickformat="%H:%M", dtick=3600000)
+fig.update_xaxes(title="Hora del día", tickformat="%H:%M", dtick=1800000)
 
 altura = max(400, min(1200, len(df_filtrado) * 30))
 
