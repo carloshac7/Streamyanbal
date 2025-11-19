@@ -7,7 +7,6 @@ from io import BytesIO
 # === CONFIGURACIÓN GENERAL ===
 st.set_page_config(page_title="Gantt MAM vs MAC", layout="wide")
 st.title("Ejecuciones de Modelos Semánticos — (MAM vs MAC)")
-st.markdown("Visualiza todos los modelos ejecutados en un día específico, agrupados por Workspace (MAM y MAC).")
 
 # === FUNCIÓN PARA LEER DESDE SHAREPOINT ===
 @st.cache_data(ttl=600)  # Cache por 10 minutos
@@ -188,8 +187,7 @@ with col2:
 with col3:
     mac_count = len(df_filtrado[df_filtrado['Workspace'] == 'MAC'])
     st.metric("🟠 MAC", mac_count)
-
-
+    
 # Mostrar bases de datos con ejecuciones múltiples
 ejecuciones_multiples = df_filtrado[df_filtrado['num_ejecucion'] > 1]['Nombre Modelo Semántico'].unique()
 if len(ejecuciones_multiples) > 0:
