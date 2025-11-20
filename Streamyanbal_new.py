@@ -76,7 +76,7 @@ if df.empty:
 df = df.sort_values(by=['fecha', 'Workspace', 'Inicio'])
 
 # === PANEL LATERAL - INFORMACIÓN ===
-st.sidebar.header("📊 Información del Dataset")
+st.sidebar.header("📊 Dataset")
 st.sidebar.metric("Total de registros", len(df))
 st.sidebar.metric("Total de días", df['fecha'].nunique())
 
@@ -87,16 +87,29 @@ for ws in sorted(df['Workspace'].unique()):
     count = len(df[df['Workspace'] == ws])
     porcentaje = (count / len(df)) * 100
     emoji = "🔵" if ws == "MAM" else "🟠" if ws == "MAC" else "🟢"
-    st.sidebar.metric(f"{emoji} {ws}", f"{count} ({porcentaje:.1f}%)")
+    st.sidebar.markdown(f"**{emoji} {ws}:** {count} ({porcentaje:.1f}%)")
 
-# === FILTROS ===
-st.sidebar.markdown("---")
-st.sidebar.subheader("🔍 Filtros")
+# === FILTROS HORIZONTALES ===
+st.markdown("---")
+st.subheader("🔍 Filtros")
 
-# Filtro por día
-dias_disponibles = sorted(df['fecha'].unique(), reverse=True)
-dias_opciones = [str(d) for d in dias_disponibles]
-dia_sel_str = st.sidebar.selectbox("📅 Selecciona un día:", dias_opciones)
+col_filtro1, col_filtro2, col_filtro3 = st.columns([2, 2, 1])
+
+with col_filtro1:
+    # Filtro por día
+    dias_disponibles = sorted(df['fecha'].unique(), reverse=True)
+    dias_opciones = [str(d) for d in dias_disponibles]
+    dia_sel_str = st.selectbox("📅 Selecciona un día:", dias_opciones)
+
+with col_filtro2:
+    # Filtro AM/PM
+    periodo_opciones = ['Todos', 'AM (00:00 - 11:59)', 'PM (12:00 - 23:59)']
+    periodo_sel = st.selectbox("🕐 Periodo del día:", periodo_opciones)
+
+with col_filtro3:
+    st.markdown("##")  # Espaciado
+    if st.button("🔄 Actualizar", use_container_width=True):
+        st.rerun()
 
 from datetime import datetime
 dia_sel = datetime.strptime(dia_sel_str, '%Y-%m-%d').date()
@@ -107,10 +120,6 @@ df_dia = df[df['fecha'] == dia_sel].copy()
 if df_dia.empty:
     st.warning("⚠️ No hay ejecuciones para el día seleccionado.")
     st.stop()
-
-# Filtro AM/PM
-periodo_opciones = ['Todos', 'AM (00:00 - 11:59)', 'PM (12:00 - 23:59)']
-periodo_sel = st.sidebar.radio("🕐 Periodo del día:", periodo_opciones)
 
 # Aplicar filtro de periodo
 if periodo_sel == 'AM (00:00 - 11:59)':
@@ -175,7 +184,7 @@ color_map = {
 # === MÉTRICAS DEL PERIODO ===
 st.subheader(f"📅 Ejecuciones del {dia_sel_str} - {periodo_texto}")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     st.metric("📊 Total", len(df_filtrado))
@@ -187,14 +196,6 @@ with col2:
 with col3:
     mac_count = len(df_filtrado[df_filtrado['Workspace'] == 'MAC'])
     st.metric("🟠 MAC", mac_count)
-    
-# Mostrar bases de datos con ejecuciones múltiples
-ejecuciones_multiples = df_filtrado[df_filtrado['num_ejecucion'] > 1]['Nombre Modelo Semántico'].unique()
-if len(ejecuciones_multiples) > 0:
-    with st.expander(f"⚠️ {len(ejecuciones_multiples)} Base(s) de datos con múltiples ejecuciones"):
-        for bd in ejecuciones_multiples:
-            count = len(df_filtrado[df_filtrado['Nombre Modelo Semántico'] == bd])
-            st.write(f"• **{bd}**: {count} ejecuciones")
 
 # === GRÁFICO GANTT ===
 fig = px.timeline(
@@ -220,13 +221,71 @@ fig = px.timeline(
 )
 
 fig.update_yaxes(autorange="reversed", title="Modelos Semánticos")
-fig.update_xaxes(title="Hora del día", tickformat="%H:%M", dtick=1800000)
+
+# Configurar el eje X con ticks cada 30 minutos
+fig.update_xaxes(
+    title="Hora del día", 
+    tickformat="%H:%M", 
+    dtick=1800000,  # Ticks cada 30 minutos
+    showgrid=True,
+    gridcolor="LightGray",
+    minor=dict(
+        ticklen=6,
+        tickcolor="LightGray",
+        showgrid=True
+    )
+)
 
 altura = max(400, min(1200, len(df_filtrado) * 30))
 
+# Obtener rango de tiempo para las líneas verticales
+tiempo_inicio = df_filtrado['Inicio'].min()
+tiempo_fin = df_filtrado['Fin'].max()
+
+# Crear lista de horas completas y medias horas
+import pandas as pd
+from datetime import datetime, timedelta
+
+# Redondear al inicio de hora
+inicio_hora = tiempo_inicio.replace(minute=0, second=0, microsecond=0)
+if tiempo_inicio.minute > 0:
+    inicio_hora += timedelta(hours=1)
+
+# Lista para almacenar las líneas
+shapes = []
+
+# Generar líneas cada 30 minutos
+hora_actual = inicio_hora
+while hora_actual <= tiempo_fin:
+    # Línea sólida para horas completas (00 minutos)
+    if hora_actual.minute == 0:
+        shapes.append(dict(
+            type="line",
+            x0=hora_actual,
+            x1=hora_actual,
+            y0=0,
+            y1=1,
+            yref="paper",
+            line=dict(color="gray", width=1, dash="solid")
+        ))
+    # Línea punteada para medias horas (30 minutos)
+    else:
+        shapes.append(dict(
+            type="line",
+            x0=hora_actual,
+            x1=hora_actual,
+            y0=0,
+            y1=1,
+            yref="paper",
+            line=dict(color="lightgray", width=1, dash="dot")
+        ))
+    
+    hora_actual += timedelta(minutes=30)
+
 fig.update_layout(
     height=altura,
-    xaxis=dict(showgrid=True, gridcolor="LightGray"),
+    xaxis=dict(showgrid=False),  # Desactivar grid default para usar shapes
+    shapes=shapes,  # Agregar las líneas personalizadas
     legend=dict(
         title="Tipo de Ejecución",
         orientation="v",
@@ -241,21 +300,6 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
-
-# === LEYENDA ===
-with st.expander("ℹ️ Leyenda del gráfico"):
-    st.markdown("""
-    **Colores por Workspace y Ejecución:**
-    - **🔵 Azul oscuro**: MAM - Primera ejecución
-    - **🔵 Azul claro**: MAM - Segunda ejecución
-    - **🔵 Azul muy claro**: MAM - Tercera+ ejecución
-    - **🟠 Naranja oscuro**: MAC - Primera ejecución
-    - **🟠 Naranja claro**: MAC - Segunda ejecución
-    - **🟠 Naranja muy claro**: MAC - Tercera+ ejecución
-    
-    **(Ej. 1)** = Primera ejecución del modelo  
-    **(Ej. 2)** = Segunda ejecución del modelo  
-    """)
 
 # === TABLA DE DETALLES ===
 st.subheader("📋 Detalle de ejecuciones")
