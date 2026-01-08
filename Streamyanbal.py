@@ -15,7 +15,7 @@ def cargar_datos_sharepoint():
     """Carga los datos desde SharePoint con caché para mejorar el rendimiento"""
     try:
         # URL original de SharePoint
-        sharepoint_url = "https://uniqueyanbal.sharepoint.com/:x:/s/DataAnalytics941/ERCSfpouz4VGq9aEmpg9hu0B7FEwE-kHOBeK7aIwzmIaPw?e=jAWV27"
+        sharepoint_url = "https://uniqueyanbal-my.sharepoint.com/:x:/g/personal/sistemas446_per_yanbal_com/EY7A6oMEU0NPhaQhqTJldVsBEN72G-vg-2C3EcyO8p1ADg"
         
         # Convertir URL de SharePoint a URL de descarga directa
         # Reemplazar ':x:' con '/download.aspx?SourceUrl='
