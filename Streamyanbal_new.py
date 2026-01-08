@@ -34,7 +34,7 @@ def cargar_desde_sharepoint(url):
 
 # === LECTURA DEL ARCHIVO ===
 # OPCIÓN A: Desde SharePoint (si funciona el enlace directo)
-url_sharepoint = "https://uniqueyanbal-my.sharepoint.com/:x:/g/personal/sistemas446_per_yanbal_com/EY7A6oMEU0NPhaQhqTJldVsBEN72G-vg-2C3EcyO8p1ADg"
+url_sharepoint = "https://uniqueyanbal-my.sharepoint.com/:x:/g/personal/sistemas446_per_yanbal_com/IQCOwOqDBFNDT4WkIakyZXVbASU85fSwu3gf3Kbuwk7Oz1k?e=MKhC6U"
 
 with st.spinner("📥 Cargando datos desde SharePoint..."):
     df = cargar_desde_sharepoint(url_sharepoint)
