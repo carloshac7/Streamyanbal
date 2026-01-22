@@ -58,39 +58,20 @@ if df.empty:
 
 df = df.sort_values(by=['fecha', 'Workspace', 'Inicio'])
 
-# === INDICADORES DEL DATASET (en área principal, debajo del subtítulo) ===
-col_info1, col_info2, col_info3, col_info4 = st.columns(4)
+# === FILTROS EN ÁREA PRINCIPAL ===
+col_filtro1, col_filtro2 = st.columns(2)
 
-with col_info1:
-    st.metric("📊 Total de registros", len(df))
+with col_filtro1:
+    dias_disponibles = sorted(df['fecha'].unique(), reverse=True)
+    dias_opciones = [str(d) for d in dias_disponibles]
+    dia_sel_str = st.selectbox("📅 Selecciona un día:", dias_opciones)
+    dia_sel = datetime.strptime(dia_sel_str, '%Y-%m-%d').date()
 
-with col_info2:
-    st.metric("📅 Total de días", df['fecha'].nunique())
-
-# Distribución por Workspace
-workspaces = sorted(df['Workspace'].unique())
-for i, ws in enumerate(workspaces[:2]):  # Máximo 2 workspaces en las columnas restantes
-    count = len(df[df['Workspace'] == ws])
-    porcentaje = (count / len(df)) * 100
-    emoji = "🔵" if ws == "MAM" else "🟠" if ws == "MAC" else "🟢"
-    
-    if i == 0:
-        with col_info3:
-            st.metric(f"{emoji} {ws}", f"{count} ({porcentaje:.1f}%)")
-    elif i == 1:
-        with col_info4:
-            st.metric(f"{emoji} {ws}", f"{count} ({porcentaje:.1f}%)")
+with col_filtro2:
+    periodo_opciones = ['Todos', 'AM (00:00 - 11:59)', 'PM (12:00 - 23:59)']
+    periodo_sel = st.radio("🕐 Periodo del día:", periodo_opciones, horizontal=True)
 
 st.markdown("---")
-
-# === FILTROS EN BARRA LATERAL ===
-st.sidebar.header("🔍 Filtros")
-
-# Filtro por día
-dias_disponibles = sorted(df['fecha'].unique(), reverse=True)
-dias_opciones = [str(d) for d in dias_disponibles]
-dia_sel_str = st.sidebar.selectbox("📅 Selecciona un día:", dias_opciones)
-dia_sel = datetime.strptime(dia_sel_str, '%Y-%m-%d').date()
 
 # Filtrar por día
 df_dia = df[df['fecha'] == dia_sel].copy()
@@ -98,10 +79,6 @@ df_dia = df[df['fecha'] == dia_sel].copy()
 if df_dia.empty:
     st.warning("⚠️ No hay ejecuciones para el día seleccionado.")
     st.stop()
-
-# Filtro AM/PM
-periodo_opciones = ['Todos', 'AM (00:00 - 11:59)', 'PM (12:00 - 23:59)']
-periodo_sel = st.sidebar.radio("🕐 Periodo del día:", periodo_opciones)
 
 # Aplicar filtro de periodo
 if periodo_sel == 'AM (00:00 - 11:59)':
@@ -186,7 +163,7 @@ fig = px.timeline(
 )
 
 fig.update_yaxes(autorange="reversed", title="Modelos Semánticos")
-fig.update_xaxes(title="Hora del día", tickformat="%H:%M", dtick=3600000)
+fig.update_xaxes(title="Hora del día", tickformat="%H:%M", dtick=1800000)
 
 fig.update_layout(
     height=max(400, min(1200, len(df_filtrado) * 30)),
